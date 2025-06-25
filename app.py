@@ -1,85 +1,57 @@
 # app.py
-from flask import Flask, render_template, request, redirect, url_for
-import os
-from flask import Flask, jsonify, render_template
+from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
-from flask_socketio import SocketIO
-from dotenv import load_dotenv
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+import os
 
-# Load environment variables from .env file
-load_dotenv()
+# Initialize Flask app
+app = Flask(__name__)
 
-# Import blueprints and database object
-from models import db
-from routes.student import student_bp, set_socketio as set_student_socketio
+# --- Configuration ---
+# You would typically load these from environment variables or a config file
+# For demonstration, hardcoding for simplicity.
+# IMPORTANT: In a production environment, use secure methods for database credentials.
+DB_USER = os.environ.get('MYSQL_USER', 'your_mysql_user')  # Replace with your MySQL username
+DB_PASSWORD = os.environ.get('MYSQL_PASSWORD', 'your_mysql_password') # Replace with your MySQL password
+DB_HOST = os.environ.get('MYSQL_HOST', 'localhost')
+DB_PORT = os.environ.get('MYSQL_PORT', '3306')
+DB_NAME = os.environ.get('MYSQL_DB_NAME', 'student_course_db')
+
+# MySQL database connection URI using PyMySQL driver
+# Ensure you have 'PyMySQL' installed (pip install PyMySQL)
+app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Initialize SQLAlchemy
+db = SQLAlchemy(app)
+
+# Dynamically import blueprints after db is initialized to avoid circular imports
+from routes.student import student_bp
 from routes.course import course_bp
 
-def create_app():
-    app = Flask(__name__)
+# Register blueprints
+app.register_blueprint(student_bp, url_prefix='/students')
+app.register_blueprint(course_bp, url_prefix='/courses')
 
-    # --- Configuration ---
-    # Use SQLite for simplicity. For production, consider PostgreSQL or MySQL.
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///instance/app.db')
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your_secret_key_here_please_change_this') # Needed for SocketIO
-    app.config['DEBUG'] = os.getenv('FLASK_DEBUG', 'False').lower() in ('true', '1', 't')
+# Health check endpoint
+@app.route('/health')
+def health_check():
+    """
+    Endpoint to check the health of the application and database connection.
+    """
+    try:
+        # Attempt to connect to the database to verify connectivity
+        db.session.execute(db.text('SELECT 1'))
+        return jsonify({"status": "healthy", "database_connection": "successful"}), 200
+    except Exception as e:
+        return jsonify({"status": "unhealthy", "database_connection": "failed", "error": str(e)}), 500
 
-    # Ensure the instance directory exists for SQLite
-    instance_path = os.path.join(app.root_path, 'instance')
-    os.makedirs(instance_path, exist_ok=True)
-
-    # --- Initialize Extensions ---
-    db.init_app(app) # Initialize SQLAlchemy with the app
-    migrate = Migrate(app, db) # Initialize Flask-Migrate
-    socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet') # Allow all origins for development
-
-    # Pass the socketio instance to blueprints that need it
-    set_student_socketio(socketio)
-
-    # --- Register Blueprints ---
-    app.register_blueprint(student_bp)
-    app.register_blueprint(course_bp)
-
-    # --- SocketIO Event Handlers ---
-    @socketio.on('connect')
-    def handle_connect():
-        print('Client connected:', request.sid)
-        # You could emit initial data here, e.g., current registrations
-
-    @socketio.on('disconnect')
-    def handle_disconnect():
-        print('Client disconnected:', request.sid)
-
-    # Basic route for testing the frontend/SocketIO connection
-    @app.route('/')
-    def index():
-        return render_template('index.html') # A simple HTML page to test real-time updates
-
-    return app, socketio
-
-# Create app and socketio instances
-app, socketio = create_app()
-
-# This block allows you to run the app directly using `python app.py`
-# It's better to use `flask run` or a production WSGI server like Gunicorn/Eventlet
-# For development with SocketIO, running with eventlet directly is often simpler:
 if __name__ == '__main__':
-    # To run with Eventlet for SocketIO support:
-    # pip install eventlet
-    # Then run: python app.py
-    # Do NOT use app.run() directly when using Flask-SocketIO unless in a very simple debug scenario.
-    print(f"Running in debug mode: {app.config['DEBUG']}")
-    print(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
-    if app.config['DEBUG']:
-        print("NOTE: For real-time functionality (SocketIO), run with `eventlet.wsgi.server` or `flask run` with async_mode set.")
-        # Fallback for simple flask run, but won't support SocketIO in some environments
-        # app.run(debug=True, host='0.0.0.0', port=5000)
-    else:
-        print("Starting production server with Eventlet...")
-    import eventlet
-    import eventlet.wsgi
-    # Set the logging level for eventlet to suppress verbose output
-    eventlet.logging.getLogger().setLevel(eventlet.logging.WARNING)
-    eventlet.wsgi.server(eventlet.listen(('', 5000)), app)
-
+    # Create database tables if they don't exist (only for development/initial setup)
+    # In a real application, use Flask-Migrate or Alembic for migrations
+    with app.app_context():
+        db.create_all()
+    # Run the Flask application
+    # debug=True should NOT be used in production
+    app.run(debug=True, host='0.0.0.0', port=5000)

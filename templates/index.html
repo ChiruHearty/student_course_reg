@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Course Registration</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Font: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light blue-grey background */
+        }
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #e2e8f0;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        /* Basic styles for buttons for better visual feedback */
+        button {
+            transition: all 0.2s ease-in-out;
+        }
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-8 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-6xl w-full bg-white shadow-xl rounded-lg p-6 sm:p-8 lg:p-10 mb-8">
+        <h1 class="text-3xl sm:text-4xl font-bold text-center text-gray-800 mb-8">
+            Student Course Registration System
+        </h1>
+
+        <!-- Notification/Message Box -->
+        <div id="message-box" class="hidden bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-6 rounded-md shadow" role="alert">
+            <p id="message-text" class="font-medium"></p>
+        </div>
+
+        <!-- Main Tabs for Student and Course Management -->
+        <div class="mb-6 border-b border-gray-200">
+            <nav class="-mb-px flex justify-center space-x-4 sm:space-x-8" aria-label="Tabs">
+                <button id="tab-students" class="whitespace-nowrap py-3 px-4 border-b-2 font-medium text-lg rounded-t-lg
+                                   text-blue-600 border-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Students
+                </button>
+                <button id="tab-courses" class="whitespace-nowrap py-3 px-4 border-b-2 font-medium text-lg rounded-t-lg
+                                  text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Courses
+                </button>
+            </nav>
+        </div>
+
+        <!-- Students Section -->
+        <div id="students-section" class="tab-content">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-6">Manage Students</h2>
+
+            <!-- Add Student Form -->
+            <div class="bg-gray-50 p-6 rounded-lg shadow-sm mb-8">
+                <h3 class="text-xl font-medium text-gray-700 mb-4">Add New Student</h3>
+                <form id="add-student-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="student-name" class="block text-sm font-medium text-gray-700">Name</label>
+                        <input type="text" id="student-name" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+                    </div>
+                    <div>
+                        <label for="student-email" class="block text-sm font-medium text-gray-700">Email</label>
+                        <input type="email" id="student-email" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+                    </div>
+                    <div class="md:col-span-2 flex justify-end">
+                        <button type="submit"
+                                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg shadow-md
+                                       focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Add Student
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Student List -->
+            <h3 class="text-xl font-medium text-gray-700 mb-4">All Students</h3>
+            <div class="overflow-x-auto rounded-lg shadow border border-gray-200">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Enrolled Courses</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="students-table-body" class="bg-white divide-y divide-gray-200">
+                        <!-- Student rows will be injected here by JavaScript -->
+                        <tr>
+                            <td colspan="5" class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">Loading students...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Courses Section (initially hidden) -->
+        <div id="courses-section" class="tab-content hidden">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-6">Manage Courses</h2>
+
+            <!-- Add Course Form -->
+            <div class="bg-gray-50 p-6 rounded-lg shadow-sm mb-8">
+                <h3 class="text-xl font-medium text-gray-700 mb-4">Add New Course</h3>
+                <form id="add-course-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="course-name" class="block text-sm font-medium text-gray-700">Course Name</label>
+                        <input type="text" id="course-name" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+                    </div>
+                    <div>
+                        <label for="course-code" class="block text-sm font-medium text-gray-700">Course Code</label>
+                        <input type="text" id="course-code" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="course-description" class="block text-sm font-medium text-gray-700">Description</label>
+                        <textarea id="course-description" rows="3"
+                                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"></textarea>
+                    </div>
+                    <div class="md:col-span-2 flex justify-end">
+                        <button type="submit"
+                                class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg shadow-md
+                                       focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                            Add Course
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Course List -->
+            <h3 class="text-xl font-medium text-gray-700 mb-4">All Courses</h3>
+            <div class="overflow-x-auto rounded-lg shadow border border-gray-200">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Enrolled Students</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="courses-table-body" class="bg-white divide-y divide-gray-200">
+                        <!-- Course rows will be injected here by JavaScript -->
+                        <tr>
+                            <td colspan="6" class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">Loading courses...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Registration Modal -->
+    <div id="registration-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
+            <h3 id="modal-title" class="text-xl font-semibold mb-4 text-gray-800">Register Student for Course</h3>
+            <div class="mb-4">
+                <label for="modal-student-select" class="block text-sm font-medium text-gray-700 mb-2">Select Student</label>
+                <select id="modal-student-select" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+                    <!-- Students populated by JS -->
+                </select>
+            </div>
+            <div class="mb-4">
+                <label for="modal-course-select" class="block text-sm font-medium text-gray-700 mb-2">Select Course</label>
+                <select id="modal-course-select" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+                    <!-- Courses populated by JS -->
+                </select>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button id="register-confirm-btn"
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md">
+                    Register
+                </button>
+                <button id="unregister-confirm-btn"
+                        class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md hidden">
+                    Unregister
+                </button>
+                <button id="modal-close-btn"
+                        class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg shadow-md">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Base URL for your Flask API
+        const API_BASE_URL = 'http://localhost:5000'; // Make sure this matches your Flask app.py host and port
+
+        // --- DOM Elements ---
+        const messageBox = document.getElementById('message-box');
+        const messageText = document.getElementById('message-text');
+
+        const tabStudents = document.getElementById('tab-students');
+        const tabCourses = document.getElementById('tab-courses');
+        const studentsSection = document.getElementById('students-section');
+        const coursesSection = document.getElementById('courses-section');
+
+        const addStudentForm = document.getElementById('add-student-form');
+        const studentNameInput = document.getElementById('student-name');
+        const studentEmailInput = document.getElementById('student-email');
+        const studentsTableBody = document.getElementById('students-table-body');
+
+        const addCourseForm = document.getElementById('add-course-form');
+        const courseNameInput = document.getElementById('course-name');
+        const courseCodeInput = document.getElementById('course-code');
+        const courseDescriptionInput = document.getElementById('course-description');
+        const coursesTableBody = document.getElementById('courses-table-body');
+
+        const registrationModal = document.getElementById('registration-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalStudentSelect = document.getElementById('modal-student-select');
+        const modalCourseSelect = document.getElementById('modal-course-select');
+        const registerConfirmBtn = document.getElementById('register-confirm-btn');
+        const unregisterConfirmBtn = document.getElementById('unregister-confirm-btn');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+
+        let allStudents = []; // To store all students fetched
+        let allCourses = [];  // To store all courses fetched
+
+        // --- Utility Functions ---
+
+        /**
+         * Displays a message in the message box.
+         * @param {string} message The message to display.
+         * @param {string} type The type of message (e.g., 'success', 'error', 'info').
+         */
+        function showMessage(message, type = 'info') {
+            messageText.textContent = message;
+            messageBox.classList.remove('hidden', 'bg-red-100', 'border-red-500', 'text-red-700', 'bg-green-100', 'border-green-500', 'text-green-700');
+            messageBox.classList.add('flex', 'items-center'); // Use flex for icon later if desired
+
+            if (type === 'error') {
+                messageBox.classList.add('bg-red-100', 'border-red-500', 'text-red-700');
+            } else if (type === 'success') {
+                messageBox.classList.add('bg-green-100', 'border-green-500', 'text-green-700');
+            } else { // Default to info
+                messageBox.classList.add('bg-blue-100', 'border-blue-500', 'text-blue-700');
+            }
+            messageBox.classList.remove('hidden');
+
+            // Automatically hide after 5 seconds
+            setTimeout(() => {
+                messageBox.classList.add('hidden');
+            }, 5000);
+        }
+
+        /**
+         * Fetches data from the API.
+         * @param {string} url The API endpoint.
+         * @returns {Promise<Array|Object>} The JSON data.
+         */
+        async function fetchData(url) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('Fetch error:', error);
+                showMessage(`Error fetching data: ${error.message}`, 'error');
+                return null;
+            }
+        }
+
+        /**
+         * Sends data to the API (POST, PUT, DELETE).
+         * @param {string} url The API endpoint.
+         * @param {string} method The HTTP method (POST, PUT, DELETE).
+         * @param {Object} data The data to send (optional).
+         * @returns {Promise<Object>} The JSON response.
+         */
+        async function sendData(url, method, data = null) {
+            try {
+                const options = {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: data ? JSON.stringify(data) : null,
+                };
+                const response = await fetch(url, options);
+                const responseData = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(responseData.message || `HTTP error! Status: ${response.status}`);
+                }
+                return responseData;
+            } catch (error) {
+                console.error('Send data error:', error);
+                showMessage(`Error: ${error.message}`, 'error');
+                return null;
+            }
+        }
+
+        // --- Tab Switching Logic ---
+        function showTab(tabId) {
+            // Hide all tab content sections
+            document.querySelectorAll('.tab-content').forEach(section => {
+                section.classList.add('hidden');
+            });
+            // Deactivate all tabs
+            document.querySelectorAll('nav button').forEach(button => {
+                button.classList.remove('text-blue-600', 'border-blue-600');
+                button.classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+            });
+
+            // Show the selected tab content
+            document.getElementById(tabId).classList.remove('hidden');
+            // Activate the selected tab button
+            const activeTabButton = document.getElementById(`tab-${tabId.replace('-section', '')}`);
+            activeTabButton.classList.remove('text-gray-500', 'border-transparent', 'hover:text-gray-700', 'hover:border-gray-300');
+            activeTabButton.classList.add('text-blue-600', 'border-blue-600');
+        }
+
+        tabStudents.addEventListener('click', () => showTab('students-section'));
+        tabCourses.addEventListener('click', () => showTab('courses-section'));
+
+        // --- Student Management Functions ---
+
+        /**
+         * Renders the list of students in the table.
+         * @param {Array} students An array of student objects.
+         */
+        function renderStudents(students) {
+            studentsTableBody.innerHTML = ''; // Clear existing rows
+            if (students.length === 0) {
+                studentsTableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">No students found.</td></tr>`;
+                return;
+            }
+            students.forEach(student => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50'; // Add hover effect
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${student.id}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${student.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${student.email}</td>
+                    <td class="px-6 py-4 text-sm text-gray-500">
+                        ${student.courses.length > 0 ? student.courses.map(c => `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mr-1 mb-1">${c.code}</span>`).join('') : 'No courses'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button onclick="openRegistrationModal('register', ${student.id})"
+                                class="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded-md mr-2 text-xs">
+                            Register
+                        </button>
+                        <button onclick="openRegistrationModal('unregister', ${student.id})"
+                                class="bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded-md mr-2 text-xs">
+                            Unregister
+                        </button>
+                        <button onclick="deleteStudent(${student.id})"
+                                class="bg-gray-500 hover:bg-gray-600 text-white py-1 px-3 rounded-md text-xs">
+                            Delete
+                        </button>
+                    </td>
+                `;
+                studentsTableBody.appendChild(row);
+            });
+        }
+
+        /**
+         * Fetches all students from the API and renders them.
+         */
+        async function fetchStudents() {
+            studentsTableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">Loading students...</td></tr>`;
+            const students = await fetchData(`${API_BASE_URL}/students/`);
+            if (students) {
+                allStudents = students; // Store for modal population
+                renderStudents(students);
+            }
+        }
+
+        /**
+         * Handles the form submission for adding a new student.
+         * @param {Event} event The form submission event.
+         */
+        addStudentForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const name = studentNameInput.value.trim();
+            const email = studentEmailInput.value.trim();
+
+            if (!name || !email) {
+                showMessage('Name and email cannot be empty.', 'error');
+                return;
+            }
+
+            const newStudent = await sendData(`${API_BASE_URL}/students/`, 'POST', { name, email });
+            if (newStudent) {
+                showMessage('Student added successfully!', 'success');
+                addStudentForm.reset(); // Clear the form
+                fetchStudents(); // Refresh the student list
+            }
+        });
+
+        /**
+         * Deletes a student by ID.
+         * @param {number} studentId The ID of the student to delete.
+         */
+        async function deleteStudent(studentId) {
+            if (!confirm('Are you sure you want to delete this student? This action cannot be undone.')) {
+                return;
+            }
+            const response = await sendData(`${API_BASE_URL}/students/${studentId}`, 'DELETE');
+            if (response) {
+                showMessage('Student deleted successfully!', 'success');
+                fetchStudents(); // Refresh the student list
+            }
+        }
+
+        // --- Course Management Functions ---
+
+        /**
+         * Renders the list of courses in the table.
+         * @param {Array} courses An array of course objects.
+         */
+        function renderCourses(courses) {
+            coursesTableBody.innerHTML = ''; // Clear existing rows
+            if (courses.length === 0) {
+                coursesTableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">No courses found.</td></tr>`;
+                return;
+            }
+            courses.forEach(course => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50'; // Add hover effect
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${course.id}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${course.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${course.code}</td>
+                    <td class="px-6 py-4 text-sm text-gray-500">${course.description || 'N/A'}</td>
+                    <td class="px-6 py-4 text-sm text-gray-500">
+                        ${course.students.length > 0 ? course.students.map(s => `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mr-1 mb-1">${s.name}</span>`).join('') : 'No students'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button onclick="deleteCourse(${course.id})"
+                                class="bg-gray-500 hover:bg-gray-600 text-white py-1 px-3 rounded-md text-xs">
+                            Delete
+                        </button>
+                    </td>
+                `;
+                coursesTableBody.appendChild(row);
+            });
+        }
+
+        /**
+         * Fetches all courses from the API and renders them.
+         */
+        async function fetchCourses() {
+            coursesTableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">Loading courses...</td></tr>`;
+            const courses = await fetchData(`${API_BASE_URL}/courses/`);
+            if (courses) {
+                allCourses = courses; // Store for modal population
+                renderCourses(courses);
+            }
+        }
+
+        /**
+         * Handles the form submission for adding a new course.
+         * @param {Event} event The form submission event.
+         */
+        addCourseForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const name = courseNameInput.value.trim();
+            const code = courseCodeInput.value.trim();
+            const description = courseDescriptionInput.value.trim();
+
+            if (!name || !code) {
+                showMessage('Course name and code cannot be empty.', 'error');
+                return;
+            }
+
+            const newCourse = await sendData(`${API_BASE_URL}/courses/`, 'POST', { name, code, description });
+            if (newCourse) {
+                showMessage('Course added successfully!', 'success');
+                addCourseForm.reset(); // Clear the form
+                fetchCourses(); // Refresh the course list
+            }
+        });
+
+        /**
+         * Deletes a course by ID.
+         * @param {number} courseId The ID of the course to delete.
+         */
+        async function deleteCourse(courseId) {
+            if (!confirm('Are you sure you want to delete this course? This will also unregister all students from it.')) {
+                return;
+            }
+            const response = await sendData(`${API_BASE_URL}/courses/${courseId}`, 'DELETE');
+            if (response) {
+                showMessage('Course deleted successfully!', 'success');
+                fetchCourses(); // Refresh the course list
+                fetchStudents(); // Also refresh students as registrations might change
+            }
+        }
+
+        // --- Registration Modal Functions ---
+
+        /**
+         * Populates the student and course dropdowns in the registration modal.
+         */
+        function populateModalDropdowns() {
+            modalStudentSelect.innerHTML = '<option value="">Select a student</option>';
+            modalCourseSelect.innerHTML = '<option value="">Select a course</option>';
+
+            allStudents.forEach(student => {
+                const option = document.createElement('option');
+                option.value = student.id;
+                option.textContent = `${student.name} (${student.email})`;
+                modalStudentSelect.appendChild(option);
+            });
+
+            allCourses.forEach(course => {
+                const option = document.createElement('option');
+                option.value = course.id;
+                option.textContent = `${course.name} (${course.code})`;
+                modalCourseSelect.appendChild(option);
+            });
+        }
+
+        /**
+         * Opens the registration modal.
+         * @param {'register'|'unregister'} mode The mode of the modal (register or unregister).
+         * @param {number} [preselectedStudentId] Optional ID of a student to pre-select.
+         */
+        function openRegistrationModal(mode, preselectedStudentId = null) {
+            populateModalDropdowns(); // Ensure dropdowns are updated
+
+            modalTitle.textContent = mode === 'register' ? 'Register Student for Course' : 'Unregister Student from Course';
+            registerConfirmBtn.classList.toggle('hidden', mode !== 'register');
+            unregisterConfirmBtn.classList.toggle('hidden', mode !== 'unregister');
+
+            if (preselectedStudentId) {
+                modalStudentSelect.value = preselectedStudentId;
+                // Disable student select if a student is pre-selected, but allow changing courses
+                // modalStudentSelect.disabled = true; // Decided against disabling to allow changing if user makes a mistake
+            } else {
+                modalStudentSelect.value = ''; // Reset selection
+                modalStudentSelect.disabled = false;
+            }
+
+            modalCourseSelect.value = ''; // Reset course selection
+
+            registrationModal.classList.remove('hidden');
+        }
+
+        /**
+         * Closes the registration modal.
+         */
+        function closeRegistrationModal() {
+            registrationModal.classList.add('hidden');
+        }
+
+        modalCloseBtn.addEventListener('click', closeRegistrationModal);
+
+        /**
+         * Handles the registration confirmation.
+         */
+        registerConfirmBtn.addEventListener('click', async () => {
+            const studentId = modalStudentSelect.value;
+            const courseId = modalCourseSelect.value;
+
+            if (!studentId || !courseId) {
+                showMessage('Please select both a student and a course.', 'error');
+                return;
+            }
+
+            const response = await sendData(`${API_BASE_URL}/students/${studentId}/register_course`, 'POST', { course_id: parseInt(courseId) });
+            if (response) {
+                showMessage('Student registered for course successfully!', 'success');
+                closeRegistrationModal();
+                fetchStudents(); // Refresh data after registration
+                fetchCourses();
+            }
+        });
+
+        /**
+         * Handles the unregistration confirmation.
+         */
+        unregisterConfirmBtn.addEventListener('click', async () => {
+            const studentId = modalStudentSelect.value;
+            const courseId = modalCourseSelect.value;
+
+            if (!studentId || !courseId) {
+                showMessage('Please select both a student and a course.', 'error');
+                return;
+            }
+
+            const response = await sendData(`${API_BASE_URL}/students/${studentId}/unregister_course`, 'POST', { course_id: parseInt(courseId) });
+            if (response) {
+                showMessage('Student unregistered from course successfully!', 'success');
+                closeRegistrationModal();
+                fetchStudents(); // Refresh data after unregistration
+                fetchCourses();
+            }
+        });
+
+
+        // --- Initial Load ---
+        window.onload = async () => {
+            await fetchStudents();
+            await fetchCourses();
+            showTab('students-section'); // Show students tab by default on load
+        };
+    </script>
+</body>
+</html>
